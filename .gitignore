@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local configuration and generated output
+.env
+.ollama_url
+results/
+resultados/
+traces/
+trazas/
+ollama/
+models/
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,5 @@
+{"id": "M1", "query": "¿Hasta cuándo puedo hacer la modificación de matrícula?", "profile": "grado", "expected_action": "answer", "expected_source": "degree_enrollment#0", "key_facts": ["2026-10-09"]}
+{"id": "M2", "query": "¿Cuántos créditos mínimos tengo que matricular?", "profile": "grado", "expected_action": "answer", "expected_source": "degree_enrollment#1", "key_facts": ["30 créditos"]}
+{"id": "L1", "query": "¿Quién firma el Learning Agreement de Erasmus?", "profile": "movilidad_saliente", "expected_action": "answer", "expected_source": "learning_agreement#1", "key_facts": ["coordinador"]}
+{"id": "D1", "query": "Quiero hablar con una persona sobre una queja de una nota", "profile": "grado", "expected_action": "escalate", "expected_unit": "SIAE"}
+{"id": "X1", "query": "¿Cuál es el menú del comedor hoy?", "profile": "grado", "expected_action": "escalate"}
