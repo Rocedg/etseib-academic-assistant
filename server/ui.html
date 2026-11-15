@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asistente académico ETSEIB</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#fff; --ink:#1b1f24; --muted:#5f6b7a; --line:#e3e7ec;
+  --accent:#1f5fbf; --accent-soft:#e8f0fc; --ok:#1e7f4f; --ok-soft:#e5f4ec;
+  --warn:#9a6200; --warn-soft:#fdf3df; --bad:#b3261e; --bad-soft:#fbe9e7;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111418; --panel:#1a1e24; --ink:#e7eaee; --muted:#9aa5b1; --line:#2b313a;
+  --accent:#7aa7ef; --accent-soft:#1d2a3d; --ok:#6fcf9b; --ok-soft:#16291f;
+  --warn:#f0bd5b; --warn-soft:#2e2615; --bad:#f28b82; --bad-soft:#331c1a;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:650}
+header .sub{color:var(--muted);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:3px 10px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
+.grow{flex:1}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+button.link{border:none;background:none;color:var(--accent);padding:0}
+main{display:grid;grid-template-columns:260px 1fr;gap:20px;max-width:1280px;margin:0 auto;padding:20px 24px}
+@media (max-width:860px){main{grid-template-columns:1fr;padding:16px}aside{order:2}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+aside h2,.card h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:600}
+#historial{list-style:none;margin:0;padding:0}
+#historial li{padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;display:flex;gap:8px;justify-content:space-between}
+#historial li:hover,#historial li.sel{background:var(--accent-soft)}
+#historial .t{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+textarea{width:100%;min-height:72px;resize:vertical;font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+select,input[type=date],input[type=password]{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.fila{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.fila label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.ejemplos{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ejemplos button{font-size:12.5px;padding:4px 10px;border-radius:99px;color:var(--muted)}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+/* etapas */
+.etapas{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:560px){.etapas{grid-template-columns:repeat(2,1fr)}}
+.etapa{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.etapa .n{font-size:12px;color:var(--muted)}
+.etapa .nom{font-weight:600;font-size:14px}
+.etapa .tt{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.etapa.activa{border-color:var(--accent);background:var(--accent-soft)}
+.etapa.activa .nom::after{content:"";display:inline-block;width:7px;height:7px;margin-left:7px;border-radius:50%;background:var(--accent);animation:lat 1s infinite}
+.etapa.hecha .nom{color:var(--ok)}
+@keyframes lat{50%{opacity:.2}}
+.reloj{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.reloj .big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.reloj .lbl{color:var(--muted);font-size:13px}
+/* resultado */
+.badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px}
+.b-ok{background:var(--ok-soft);color:var(--ok)} .b-warn{background:var(--warn-soft);color:var(--warn)} .b-bad{background:var(--bad-soft);color:var(--bad)}
+.b-info{background:var(--accent-soft);color:var(--accent)}
+.pregunta{font-size:13.5px;color:var(--muted);margin-bottom:6px}
+.respuesta{font-size:17px;line-height:1.6;margin:8px 0 4px}
+sup.cita{font-size:11.5px;font-weight:700;color:var(--accent);cursor:pointer;padding:0 2px}
+.lista{margin:6px 0 0;padding-left:20px}
+.aviso{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:13.5px;margin-top:10px}
+.fuente{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px}
+.fuente.citada{border-color:var(--accent)}
+.fuente.foco{box-shadow:0 0 0 3px var(--accent-soft)}
+.fuente .cab{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fuente .num{font-family:var(--mono);font-weight:700;color:var(--accent)}
+.fuente .meta{color:var(--muted);font-size:12.5px}
+.fuente pre{white-space:pre-wrap;font:13px/1.5 var(--mono);margin:8px 0 0;color:var(--muted);display:none}
+.fuente.abierta pre{display:block}
+.fuente .der{display:inline-flex;gap:10px;align-items:center;white-space:nowrap;margin-left:auto}
+.barra{height:5px;background:var(--line);border-radius:3px;width:90px;overflow:hidden}
+.barra i{display:block;height:100%;background:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.kv{display:flex;flex-wrap:wrap;gap:6px}
+.kv span{font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+.kv b{font-weight:600}
+.vacio{color:var(--muted);text-align:center;padding:40px 10px}
+.error{background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:10px 12px}
+.oculto{display:none!important}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:22px;max-width:420px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog input{width:100%;margin:10px 0}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Asistente académico ETSEIB</h1><div class="sub">Prototipo de la alternativa B · diagnosticador, agentes por dominio, herramienta de plazos y supervisor · modelo local</div></div>
+  <div class="grow"></div>
+  <span class="pill" id="estado"><span class="dot"></span><span>Conectando…</span></span>
+  <button id="btnToken" title="Cambiar el token de acceso">Token</button>
+</header>
+
+<main>
+  <aside class="col">
+    <div class="card">
+      <h2>Consultas recientes</h2>
+      <ul id="historial"><li class="vacio" style="cursor:default">Todavía no hay consultas</li></ul>
+    </div>
+  </aside>
+
+  <section class="col">
+    <div class="card">
+      <h2>Pregunta</h2>
+      <textarea id="consulta" placeholder="Escribe una consulta como lo haría un estudiante…"></textarea>
+      <div class="ejemplos" id="ejemplos"></div>
+      <div class="fila">
+        <label>Perfil
+          <select id="perfil">
+            <option value="">sin indicar</option><option value="grado">grado</option><option value="master">máster</option>
+            <option value="doctorado">doctorado</option><option value="movilidad_entrante">movilidad entrante</option>
+            <option value="movilidad_saliente">movilidad saliente</option>
+          </select></label>
+        <label title="Fecha que el asistente toma como 'hoy' para calcular si un plazo está abierto">Fecha simulada
+          <input type="date" id="hoy"></label>
+        <div class="grow"></div>
+        <button class="primary" id="enviar">Preguntar</button>
+      </div>
+    </div>
+
+    <div class="card oculto" id="progreso">
+      <div class="reloj"><span class="big" id="reloj">0,0 s</span><span class="lbl" id="relojLbl">en cola</span></div>
+      <div class="etapas" id="etapas"></div>
+    </div>
+
+    <div id="resultado" class="col"></div>
+  </section>
+</main>
+
+<dialog id="dlgToken">
+  <form method="dialog" id="frmToken">
+    <h2 style="margin:0 0 4px;font-size:17px">Token de acceso</h2>
+    <div class="sub" style="color:var(--muted);font-size:13.5px">Pega tu token personal (lo crea quien administra el portátil con <code>servidor.py token nuevo</code>). Solo se guarda en este navegador.</div>
+    <input type="password" id="inpToken" autocomplete="off" placeholder="token">
+    <div class="fila" style="justify-content:flex-end"><button value="cancel" formnovalidate>Cancelar</button><button class="primary" value="ok">Guardar</button></div>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+// API keys in English (server/server.py); everything the viewer reads stays in Spanish.
+const STAGES = [["diagnosis","Diagnóstico","clasifica dominio, tipo, idioma y perfil"],
+                ["retrieval","Recuperación","busca fragmentos vigentes (BM25 + embeddings)"],
+                ["drafting","Redacción","el agente responde citando [n]"],
+                ["verification","Verificación","el supervisor comprueba el respaldo"]];
+const EXAMPLES = ["¿Hasta cuándo puedo modificar la matrícula?", "¿Cuántos créditos mínimos tengo que matricular?",
+                  "¿Quién firma el Learning Agreement?", "Quiero hablar con una persona de secretaría"];
+const STATUS_ES = {queued: "en cola", running: "procesando en el portátil", done: "latencia total", error: "error"};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sec = x => (x == null ? "–" : x.toFixed(1).replace(".", ",") + " s");
+const store = {get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+               set: (k, v) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch (e) {} }};
+let token = store.get("assistant_token") || "", authRequired = true, timer = null, current = null;
+
+async function api(method, path, body) {
+  const r = await fetch(path, {method, headers: {"Content-Type": "application/json", "Authorization": "Bearer " + token},
+                               body: body ? JSON.stringify(body) : undefined});
+  if (r.status === 401) { askToken(); throw new Error("Token no válido o ausente"); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
+}
+
+function askToken() { $("inpToken").value = ""; if (!$("dlgToken").open) $("dlgToken").showModal(); }
+$("frmToken").addEventListener("submit", e => {
+  if (e.submitter && e.submitter.value === "ok" && $("inpToken").value.trim()) {
+    token = $("inpToken").value.trim(); store.set("assistant_token", token); loadHistory();
+  }
+});
+$("btnToken").onclick = askToken;
+
+async function health() {
+  const p = $("estado");
+  try {
+    const s = await (await fetch("/health")).json();
+    authRequired = s.auth !== false;
+    $("btnToken").classList.toggle("oculto", !authRequired);
+    const mock = s.backend === "mock";
+    const ok = s.ok && (mock || !String(s.ollama).startsWith("sin respuesta"));
+    p.innerHTML = `<span class="dot ${ok ? "ok" : "bad"}"></span><span>${mock ? "modo ensayo (respuestas de prueba)" : esc(s.model || "modelo ?")}` +
+      `${mock ? "" : " · Ollama " + esc(s.ollama)} · ${s.fragments} fragmentos${s.queued ? " · " + s.queued + " en cola" : ""}</span>`;
+    return s;
+  } catch (e) { p.innerHTML = `<span class="dot bad"></span><span>Sin conexión con el portátil</span>`; return null; }
+}
+
+async function loadHistory() {
+  if (authRequired && !token) return;
+  try {
+    const h = await api("GET", "/v1/queries");
+    const ul = $("historial");
+    if (!h.length) { ul.innerHTML = `<li class="vacio" style="cursor:default">Todavía no hay consultas</li>`; return; }
+    ul.innerHTML = h.map(t => `<li data-id="${t.id}" class="${t.id === current ? "sel" : ""}"><span>${esc(t.query)}</span>` +
+      `<span class="t">${t.status === "done" ? sec(t.latency_s) : t.status === "error" ? "error" : "…"}</span></li>`).join("");
+    ul.querySelectorAll("li[data-id]").forEach(li => li.onclick = () => follow(li.dataset.id));
+  } catch (e) {}
+}
+
+function drawStages(j) {
+  const dur = {}, st = j.stages || [];
+  st.forEach(([n, t], i) => {
+    const end = i + 1 < st.length ? st[i + 1][1] : (j.status === "running" ? null : j.latency_s);
+    dur[n] = end == null ? null : end - t;
+  });
+  $("etapas").innerHTML = STAGES.map(([id, name, desc], i) => {
+    const seen = id in dur, active = j.status === "running" && j.stage === id;
+    const t = active ? "en curso" : seen ? sec(dur[id]) : (j.status === "done" ? "no aplica" : "");
+    return `<div class="etapa ${active ? "activa" : seen ? "hecha" : ""}" title="${esc(desc)}"><div class="n">${i + 1}</div>` +
+           `<div class="nom">${name}</div><div class="tt">${t}</div></div>`;
+  }).join("");
+}
+
+function drawProgress(j) {
+  $("progreso").classList.remove("oculto");
+  $("reloj").textContent = j.status === "queued" ? "–" : sec(j.status === "running" ? j.elapsed_s : j.latency_s);
+  $("relojLbl").textContent = j.status === "queued" ? `en cola${j.ahead ? " · " + j.ahead + " por delante" : ""}` : (STATUS_ES[j.status] || j.status);
+  drawStages(j);
+}
+
+const withCitations = t => esc(t).replace(/\[(\d+)\]/g, (_, n) => `<sup class="cita" data-n="${n}">[${n}]</sup>`);
+
+function drawResult(j) {
+  const r = j.result || {}, d = j.detail || {}, rec = j.retrieved || [];
+  const cited = new Set(r.citations || []);
+  let h = `<div class="card"><div class="pregunta">${esc(j.query)}${j.profile ? " · perfil " + esc(j.profile) : ""}${j.today ? " · fecha " + esc(j.today) : ""}</div>`;
+  if (j.status === "error") { $("resultado").innerHTML = h + `<div class="error">${esc(j.error)}</div></div>`; return; }
+  if (r.action === "answer") {
+    const ok = (d.supervisor || {}).decision === "answer";
+    h += `<span class="badge ${ok ? "b-ok" : "b-warn"}">${ok ? "Respuesta verificada" : "Respuesta con advertencia"}</span>`;
+    h += `<div class="respuesta">${withCitations(r.answer)}</div>`;
+    if ((r.next_actions || []).length) h += `<h2 style="margin-top:14px">Siguientes pasos</h2><ul class="lista">${r.next_actions.map(a => `<li>${withCitations(a)}</li>`).join("")}</ul>`;
+    (r.warnings || []).forEach(a => h += `<div class="aviso">⚠ ${esc(a)}</div>`);
+  } else if (r.action === "clarify") {
+    h += `<span class="badge b-info">Pide aclaración</span><div class="respuesta">${esc(r.question)}</div>`;
+  } else if (r.action === "escalate") {
+    const tk = r.create_ticket || {};
+    h += `<span class="badge b-bad">Derivada a una persona</span><div class="respuesta">Se ha preparado un borrador de ticket para <b>${esc(tk.recommended_unit)}</b>.</div>`;
+    h += `<div class="kv" style="margin-top:8px">${(tk.pending_questions || []).map(m => `<span>motivo: <b>${esc(m)}</b></span>`).join("")}` +
+         `${(tk.sources_consulted || []).map(f => `<span>consultada: ${esc(f)}</span>`).join("")}</div>`;
+  }
+  h += `</div>`;
+
+  if (rec.length) {
+    const max = Math.max(...rec.map(f => f.score)) || 1;
+    h += `<div class="card"><h2>Fuentes recuperadas (${rec.length}) · las citadas, resaltadas</h2>` + rec.map(f =>
+      `<div class="fuente ${cited.has(f.n) ? "citada" : ""}" id="f${f.n}"><div class="cab"><span class="num">[${f.n}]</span>` +
+      `<b>${esc(f.source)}</b><span class="meta">· ${esc(f.section)} · v${esc(f.version)}</span><span class="der">` +
+      `<span class="barra" title="puntuación ${f.score}"><i style="width:${Math.round(100 * f.score / max)}%"></i></span>` +
+      `<button class="link" data-abrir="${f.n}">ver texto</button></span></div>` +
+      `${f.url ? `<div class="meta">${esc(f.url)}</div>` : ""}<pre>${esc(f.text)}</pre></div>`).join("") + `</div>`;
+  }
+
+  const dg = d.diagnosis || {}, calls = j.llm_calls || [];
+  const deadlines = [...new Set(rec.flatMap(f => [...f.text.matchAll(/(\d{4}-\d{2}-\d{2} a \d{4}-\d{2}-\d{2}) \[([^\]]+)\]/g)].map(m => m[1] + " → " + m[2])))];
+  h += `<div class="card"><h2>Cómo se ha llegado aquí</h2><div class="kv">` +
+    [["dominio", "domain"], ["tipo", "tipo"], ["idioma", "language"], ["perfil", "profile"]].map(([es, k]) => `<span>${es}: <b>${esc(dg[k] ?? "–")}</b></span>`).join("") +
+    `<span>ruta: <b>${esc(d.route)}</b></span>${d.faq ? `<span>FAQ: <b>${esc(d.faq)}</b></span>` : ""}` +
+    deadlines.map(p => `<span>herramienta de plazos: <b>${esc(p)}</b></span>`).join("") +
+    `${d.supervisor ? `<span>supervisor: <b>${esc(d.supervisor.decision)}</b>${(d.supervisor.reasons || []).length ? " (" + esc(d.supervisor.reasons.join(", ")) + ")" : ""}</span>` : ""}</div>`;
+  if (calls.length) {
+    h += `<table style="margin-top:12px"><tr><th>Llamada al modelo</th><th>Modelo</th><th class="num">Tokens entrada</th><th class="num">Tokens salida</th><th class="num">Tiempo</th><th class="num">tok/s</th></tr>` +
+      calls.map(c => `<tr><td>${esc(c.task)}</td><td>${esc(c.model)}</td><td class="num">${c.tokens_prompt}</td><td class="num">${c.tokens_gen}</td>` +
+        `<td class="num">${sec(c.s_total)}</td><td class="num">${c.s_gen ? (c.tokens_gen / c.s_gen).toFixed(1) : "–"}</td></tr>`).join("") + `</table>`;
+  }
+  $("resultado").innerHTML = h + `</div>`;
+  $("resultado").querySelectorAll("[data-abrir]").forEach(b => b.onclick = () => $("f" + b.dataset.abrir).classList.toggle("abierta"));
+  $("resultado").querySelectorAll("sup.cita").forEach(s => s.onclick = () => {
+    const f = $("f" + s.dataset.n); if (!f) return;
+    f.classList.add("abierta", "foco"); f.scrollIntoView({behavior: "smooth", block: "center"});
+    setTimeout(() => f.classList.remove("foco"), 1500);
+  });
+}
+
+async function follow(id) {
+  clearTimeout(timer); current = id; loadHistory();
+  try {
+    const j = await api("GET", "/v1/queries/" + id);
+    drawProgress(j);
+    if (j.status === "queued" || j.status === "running") {
+      $("resultado").innerHTML = ""; $("enviar").disabled = true; store.set("assistant_pending", id);
+      timer = setTimeout(() => follow(id), 1000);
+    } else { $("enviar").disabled = false; store.set("assistant_pending", null); drawResult(j); loadHistory(); health(); }
+  } catch (e) {
+    $("enviar").disabled = false;
+    if (/no existe/.test(e.message)) store.set("assistant_pending", null);
+    $("resultado").innerHTML = `<div class="card"><div class="error">${esc(e.message)}</div></div>`;
+  }
+}
+
+$("enviar").onclick = async () => {
+  const query = $("consulta").value.trim();
+  if (!query) return $("consulta").focus();
+  if (authRequired && !token) return askToken();
+  $("enviar").disabled = true;
+  try {
+    const j = await api("POST", "/v1/queries", {query, profile: $("perfil").value || null, today: $("hoy").value || null});
+    follow(j.id);
+  } catch (e) {
+    $("enviar").disabled = false;
+    $("resultado").innerHTML = `<div class="card"><div class="error">${esc(e.message)}</div></div>`;
+  }
+};
+$("consulta").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("enviar").click(); });
+$("ejemplos").innerHTML = EXAMPLES.map(q => `<button>${esc(q)}</button>`).join("");
+$("ejemplos").querySelectorAll("button").forEach(b => b.onclick = () => { $("consulta").value = b.textContent; $("consulta").focus(); });
+$("hoy").value = new Date().toISOString().slice(0, 10);
+
+(async () => {
+  await health(); setInterval(health, 15000);
+  if (authRequired && !token) return askToken();
+  loadHistory();
+  // if the tab was closed while a query was running, the server finished it: pick it up again
+  const pending = store.get("assistant_pending");
+  if (pending) follow(pending);
+})();
+</script>
+</body>
+</html>

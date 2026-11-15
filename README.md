@@ -24,12 +24,17 @@ python demo.py
 
 On Ubuntu, replace `set` with `export`. The classroom scripts automate the CPU setup and are documented in [docs/classroom-test.md](docs/classroom-test.md).
 
+## Remote server and web UI (demo)
+
+One always-on laptop runs Ollama and the pipeline; anyone opens its HTTPS URL in a browser and pastes a personal token. Setup, API and rehearsal mode (`python server/server.py --mock`) are in [server/README.md](server/README.md).
+
 ## Layout
 
 - `assistant/`: Python modules for diagnosis, retrieval, agents, and supervision
 - `data/`: Spanish toy corpus, FAQ, and question bank
 - `main.py`, `evaluate.py`, `demo.py`: CLI entry points
 - `scripts/classroom/`: Ubuntu and Windows Ollama test scripts
+- `server/`: remote gateway, web UI and Windows setup script for the server laptop
 - `docs/`: architecture, classroom, demo, and remote-access guides
 
 The corpus, FAQ content, profile values such as `movilidad_saliente`, and LLM prompt content remain Spanish because the assistant serves Spanish-speaking students.
